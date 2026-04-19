@@ -189,3 +189,109 @@ resource "aws_route_table_association" "private_rta_2" {
   subnet_id      = aws_subnet.private_subnet_2.id
   route_table_id = aws_route_table.private_rt_2.id
 }
+# ========================
+# SECURITY GROUPS
+# ========================
+
+# Bastion Security Group
+resource "aws_security_group" "bastion_sg" {
+  name        = "techcorp-bastion-sg"
+  description = "Security group for bastion host"
+  vpc_id      = aws_vpc.techcorp_vpc.id
+
+  ingress {
+    description = "SSH from my IP only"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.my_ip]
+  }
+
+  egress {
+    description = "Allow all outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "techcorp-bastion-sg"
+  }
+}
+# Web Security Group
+resource "aws_security_group" "web_sg" {
+  name        = "techcorp-web-sg"
+  description = "Security group for web servers"
+  vpc_id      = aws_vpc.techcorp_vpc.id
+
+  ingress {
+    description = "HTTP from anywhere"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "HTTPS from anywhere"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description     = "SSH from Bastion only"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion_sg.id]
+  }
+
+  egress {
+    description = "Allow all outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "techcorp-web-sg"
+  }
+}
+# Database Security Group
+resource "aws_security_group" "db_sg" {
+  name        = "techcorp-db-sg"
+  description = "Security group for database server"
+  vpc_id      = aws_vpc.techcorp_vpc.id
+
+  ingress {
+    description     = "Postgres from Web SG only"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.web_sg.id]
+  }
+
+  ingress {
+    description     = "SSH from Bastion only"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion_sg.id]
+  }
+
+  egress {
+    description = "Allow all outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "techcorp-db-sg"
+  }
+}
