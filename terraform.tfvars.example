@@ -1,0 +1,7 @@
+region                = "eu-west-2"
+vpc_cidr              = "10.0.0.0/16"
+instance_type_web     = "t3.micro"
+instance_type_db      = "t3.small"
+instance_type_bastion = "t3.micro"
+key_pair_name         = "your-key-pair-name"
+my_ip                 = "your-ip-address/32"
