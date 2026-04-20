@@ -295,3 +295,76 @@ resource "aws_security_group" "db_sg" {
     Name = "techcorp-db-sg"
   }
 }
+# ========================
+# BASTION HOST
+# ========================
+resource "aws_instance" "bastion" {
+  ami                         = var.ami_id
+  instance_type               = var.instance_type_bastion
+  subnet_id                   = aws_subnet.public_subnet_1.id
+  vpc_security_group_ids      = [aws_security_group.bastion_sg.id]
+  key_name                    = var.key_pair_name
+  associate_public_ip_address = true
+
+  tags = {
+    Name = "techcorp-bastion"
+  }
+}
+
+# Elastic IP for Bastion
+resource "aws_eip" "bastion_eip" {
+  instance = aws_instance.bastion.id
+  domain   = "vpc"
+
+  tags = {
+    Name = "techcorp-bastion-eip"
+  }
+}
+
+# ========================
+# WEB SERVERS
+# ========================
+resource "aws_instance" "web_server_1" {
+  ami                    = var.ami_id
+  instance_type          = var.instance_type_web
+  subnet_id              = aws_subnet.private_subnet_1.id
+  vpc_security_group_ids = [aws_security_group.web_sg.id]
+  key_name               = var.key_pair_name
+
+  user_data = file("user_data/web_server_setup.sh")
+
+  tags = {
+    Name = "techcorp-web-server-1"
+  }
+}
+
+resource "aws_instance" "web_server_2" {
+  ami                    = var.ami_id
+  instance_type          = var.instance_type_web
+  subnet_id              = aws_subnet.private_subnet_2.id
+  vpc_security_group_ids = [aws_security_group.web_sg.id]
+  key_name               = var.key_pair_name
+
+  user_data = file("user_data/web_server_setup.sh")
+
+  tags = {
+    Name = "techcorp-web-server-2"
+  }
+}
+
+# ========================
+# DATABASE SERVER
+# ========================
+resource "aws_instance" "db_server" {
+  ami                    = var.ami_id
+  instance_type          = var.instance_type_db
+  subnet_id              = aws_subnet.private_subnet_1.id
+  vpc_security_group_ids = [aws_security_group.db_sg.id]
+  key_name               = var.key_pair_name
+
+  user_data = file("user_data/db_server_setup.sh")
+
+  tags = {
+    Name = "techcorp-db-server"
+  }
+}
